@@ -44,7 +44,7 @@ private mixin template _memsetT(T, string nameExt)
     mixin
     (
         "extern(C) " ~ T.stringof ~ "* _memset" ~ nameExt ~"(" ~ T.stringof ~ "* p, "
-                                         ~ T.stringof ~ "value, size_t count)
+                                         ~ T.stringof ~ " value, size_t count)
         {
             " ~ T.stringof ~ "* pstart = p;
 	    " ~ T.stringof ~ "* ptop = p + count;
