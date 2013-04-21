@@ -13,41 +13,46 @@
  */
 module rt.memset;
 
-extern (C)
-{
+extern (C):
+//{
     // Functions from the C library.
     void *memcpy(void *, void *, size_t);
-}
+//}
 
-alias _memset!short _memset16i;
-alias _memset!int _memset32i;
-alias _memset!long _memset64i;
+mixin _memsetT!(short, "16i");
+mixin _memsetT!(int, "32i");
+mixin _memsetT!(long, "64i");
+mixin _memsetT!(_128bits, "128i");
+mixin _memsetT!(float, "Float");
+mixin _memsetT!(cfloat, "Cfloat");
+mixin _memsetT!(double, "Double");
+mixin _memsetT!(cdouble, "Cdouble");
+mixin _memsetT!(real, "Real");
+mixin _memsetT!(creal, "Creal");
 
 //avoids having to use void[], which was confusing and x86_64 dependent.
 //does this lead to another call to this module? void[] didn't.
-struct 128bits //Could use long[2] ???
+static assert( long.sizeof == 8 ); //perhaps? It seems bad to let this silently be wrong.
+private struct _128bits //Could use long[2] ???
 {
     long a;
     long b;
 }
-alias _memset!128bits _memset128i;
 
-alias _memset!float _memsetFloat;
-alias _memset!double _memsetDouble;
-alias _memset!real _memsetReal;
-alias _memset!cfloat _memsetCfloat;
-alias _memset!cdouble _memsetCdouble;
-alias _memset!creal _memsetCreal;
-
-extern (C) T* _memset(T)(T* p, T value, size_t count)
+private mixin template _memsetT(T, string nameExt)
 {
-    T* pstart = p;
-    T* ptop = p + count;
-
-    while(p < ptop)
-        *p++ = value;
-
-    return pstart; //why are we returning anything?
+    mixin
+    (
+        "extern(C) " ~ T.stringof ~ "* _memset" ~ nameExt ~"(" ~ T.stringof ~ "* p, "
+                                         ~ T.stringof ~ "value, size_t count)
+        {
+            " ~ T.stringof ~ "* pstart = p;
+	    " ~ T.stringof ~ "* ptop = p + count;
+	    while(p < ptop)
+	        *p++ = value;
+            return pstart; //why are we returning anything?
+        }"
+    );
 }
 
 void* _memsetn(void* p, void* value, size_t count, size_t sizelem)
