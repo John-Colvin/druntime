@@ -19,122 +19,47 @@ extern (C)
     void *memcpy(void *, void *, size_t);
 }
 
-extern (C):
+alias _memset!short _memset16i;
+alias _memset!int _memset32i;
+alias _memset!long _memset64i;
 
-short *_memset16(short *p, short value, size_t count)
+//avoids having to use void[], which was confusing and x86_64 dependent.
+//does this lead to another call to this module? void[] didn't.
+struct 128bits //Could use long[2] ???
 {
-    short *pstart = p;
-    short *ptop;
+    long a;
+    long b;
+}
+alias _memset!128bits _memset128i;
 
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
+alias _memset!float _memsetFloat;
+alias _memset!double _memsetDouble;
+alias _memset!real _memsetReal;
+alias _memset!cfloat _memsetCfloat;
+alias _memset!cdouble _memsetCdouble;
+alias _memset!creal _memsetCreal;
+
+extern (C) T* _memset(T)(T* p, T value, size_t count)
+{
+    T* pstart = p;
+    T* ptop = p + count;
+
+    while(p < ptop)
+        *p++ = value;
+
+    return pstart; //why are we returning anything?
 }
 
-int *_memset32(int *p, int value, size_t count)
+void* _memsetn(void* p, void* value, size_t count, size_t sizelem)
 {
-version (D_InlineAsm_X86)
-{
-    asm
-    {
-        mov     EDI,p           ;
-        mov     EAX,value       ;
-        mov     ECX,count       ;
-        mov     EDX,EDI         ;
-        rep                     ;
-        stosd                   ;
-        mov     EAX,EDX         ;
-    }
-}
-else
-{
-    int *pstart = p;
-    int *ptop;
-
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
-}
-}
-
-long *_memset64(long *p, long value, size_t count)
-{
-    long *pstart = p;
-    long *ptop;
-
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
-}
-
-cdouble *_memset128(cdouble *p, cdouble value, size_t count)
-{
-    cdouble *pstart = p;
-    cdouble *ptop;
-
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
-}
-
-void[] *_memset128ii(void[] *p, void[] value, size_t count)
-{
-    void[] *pstart = p;
-    void[] *ptop;
-
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
-}
-
-real *_memset80(real *p, real value, size_t count)
-{
-    real *pstart = p;
-    real *ptop;
-
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
-}
-
-creal *_memset160(creal *p, creal value, size_t count)
-{
-    creal *pstart = p;
-    creal *ptop;
-
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
-}
-
-void *_memsetn(void *p, void *value, int count, size_t sizelem)
-{   void *pstart = p;
-    int i;
+    void *pstart = p;
+    size_t i;
 
     for (i = 0; i < count; i++)
     {
         memcpy(p, value, sizelem);
-        p = cast(void *)(cast(char *)p + sizelem);
+        p = p + sizelem;
     }
     return pstart;
 }
 
-float *_memsetFloat(float *p, float value, size_t count)
-{
-    float *pstart = p;
-    float *ptop;
-
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
-}
-
-double *_memsetDouble(double *p, double value, size_t count)
-{
-    double *pstart = p;
-    double *ptop;
-
-    for (ptop = &p[count]; p < ptop; p++)
-        *p = value;
-    return pstart;
-}
