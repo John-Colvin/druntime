@@ -13,22 +13,11 @@
  */
 module rt.memset;
 
-extern (C):
-//{
+extern (C)
+{
     // Functions from the C library.
     void *memcpy(void *, void *, size_t);
-//}
-
-mixin _memsetT!(short, "16i");
-mixin _memsetT!(int, "32i");
-mixin _memsetT!(long, "64i");
-mixin _memsetT!(_128bits, "128i");
-mixin _memsetT!(float, "Float");
-mixin _memsetT!(cfloat, "Cfloat");
-mixin _memsetT!(double, "Double");
-mixin _memsetT!(cdouble, "Cdouble");
-mixin _memsetT!(real, "Real");
-mixin _memsetT!(creal, "Creal");
+}
 
 //avoids having to use void[], which was confusing and x86_64 dependent.
 //does this lead to another call to this module? void[] didn't.
@@ -39,10 +28,20 @@ private struct _128bits //Could use long[2] ???
     long b;
 }
 
-private mixin template _memsetT(T, string nameExt)
+mixin(_memsetT!(short, "16i"));
+mixin(_memsetT!(int, "32i"));
+mixin(_memsetT!(long, "64i"));
+mixin(_memsetT!(_128bits, "128i"));
+mixin(_memsetT!(float, "Float"));
+mixin(_memsetT!(cfloat, "Cfloat"));
+mixin(_memsetT!(double, "Double"));
+mixin(_memsetT!(cdouble, "Cdouble"));
+mixin(_memsetT!(real, "Real"));
+mixin(_memsetT!(creal, "Creal"));
+
+template _memsetT(T, string nameExt)
 {
-    mixin
-    (
+    enum _memsetT =        
         "extern(C) " ~ T.stringof ~ "* _memset" ~ nameExt ~"(" ~ T.stringof ~ "* p, "
                                          ~ T.stringof ~ " value, size_t count)
         {
@@ -51,8 +50,7 @@ private mixin template _memsetT(T, string nameExt)
 	    while(p < ptop)
 	        *p++ = value;
             return pstart; //why are we returning anything?
-        }"
-    );
+        }";
 }
 
 void* _memsetn(void* p, void* value, size_t count, size_t sizelem)
