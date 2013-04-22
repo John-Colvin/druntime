@@ -15,14 +15,13 @@ module rt.memset;
 
 import core.simd;
 
-extern (C)
-{
-    // Functions from the C library.
-    void *memcpy(void *, void *, size_t);
-}
+extern (C):
+
+// Functions from the C library.
+void *memcpy(void *, void *, size_t);
+
 
 //avoids having to use void[], which was confusing and x86_64 dependent.
-//does this lead to another call to this module? void[] didn't.
 static assert( long.sizeof == 8 ); //perhaps? It seems bad to let this silently be wrong.
 private struct _128bits //Could use long[2] ???
 {
