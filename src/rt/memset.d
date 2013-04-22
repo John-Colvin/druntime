@@ -13,6 +13,8 @@
  */
 module rt.memset;
 
+import core.simd;
+
 extern (C)
 {
     // Functions from the C library.
@@ -38,18 +40,39 @@ mixin(_memsetT!(double, "Double"));
 mixin(_memsetT!(cdouble, "Cdouble"));
 mixin(_memsetT!(real, "Real"));
 mixin(_memsetT!(creal, "Creal"));
+mixin(_memsetT!("void16", "Vec128")); //Don't think we have to differentiate between different
+                                      //base types.
+version (None) //AVX types not supported by dmd currently.
+{
+    mixin(_memsetT!("void32", "Vec256"));
+}
 
 template _memsetT(T, string nameExt)
 {
     enum _memsetT =        
-        "extern(C) " ~ T.stringof ~ "* _memset" ~ nameExt ~"(" ~ T.stringof ~ "* p, "
-                                         ~ T.stringof ~ " value, size_t count)
+        "extern(C) auto _memset" ~ nameExt ~"(" ~ T.stringof ~ "* p, "
+                                                ~ T.stringof ~ " value, size_t count)
         {
-            " ~ T.stringof ~ "* pstart = p;
-	    " ~ T.stringof ~ "* ptop = p + count;
+            auto pstart = p;
+	    auto ptop = p + count;
 	    while(p < ptop)
 	        *p++ = value;
             return pstart; //why are we returning anything?
+        }";
+}
+
+//only exists to avoid strange vector TypeN.stringof == "cast(Type[N])(__vector(int[N]))"
+template _memsetT(string typeStr, string nameExt)
+{
+    enum _memsetT =        
+        "extern(C) auto _memset" ~ nameExt ~"(" ~ typeStr ~ "* p, "
+                                                ~ typeStr ~ " value, size_t count)
+        {
+            auto pstart = p;
+	    auto ptop = p + count;
+	    while(p < ptop)
+	        *p++ = value;
+            return pstart;
         }";
 }
 
